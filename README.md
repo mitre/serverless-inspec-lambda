@@ -1,5 +1,7 @@
 # Serverless InSpec (AWS)
 
+[![Static Analysis](https://github.com/mitre/serverless-inspec-lambda/actions/workflows/static.yml/badge.svg)](https://github.com/mitre/serverless-inspec-lambda/actions/workflows/static.yml)
+
 This lambda function is meant to allow you to execute InSpec profiles in a serverless fashion. It strives to be as similar as it can be to how you would normally run `inspec exec` on your CLI, while also adding some useful functionality specific to AWS.
 
 ## Table of Contents
