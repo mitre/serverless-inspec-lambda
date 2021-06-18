@@ -6,6 +6,11 @@ The below is an example terraform configuration that is able to deploy the serve
 **Note that the permissions provided to this example IAM role are quite open and it is highly recommended that you tweak
  these so that your lambda runner has the minimum required permissions!**
 
+ Before deploying with terraform you will need to pull the docker image to your deployment machine
+```bash
+docker pull ghcr.io/mitre/serverless-inspec-lambda:<version>
+```
+
 ```hcl
 ##
 # InSpec Role to Invoke InSpec Lambda function 

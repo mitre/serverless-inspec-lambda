@@ -48,7 +48,7 @@ resource "null_resource" "push_image" {
       REPOSITORY_URL = aws_ecr_repository.mitre_serverless_inspec.repository_url
       AWS_REGION     = data.aws_region.current.name
       AWS_ACCOUNT_ID = data.aws_caller_identity.current.account_id
-      REPO_NAME      = "mitre/serverless-inspec-lambda"
+      REPO_NAME      = "ghcr.io/mitre/serverless-inspec-lambda"
       IMAGE_TAG      = local.image_version
     }
   }
