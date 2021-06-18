@@ -1,0 +1,25 @@
+name: Static Analysis
+
+on: [push, workflow_dispatch]
+
+jobs:
+  static:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.7.2
+
+      - name: Rubocop
+        run: |
+          gem install rubocop
+          rubocop
+
+      - name: Bundle Audit
+        run: |
+          gem install bundler bundle-audit
+          cd ./src/
+          bundle-audit

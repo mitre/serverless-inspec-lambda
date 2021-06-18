@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Log into GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build and Push image
+        run: |
+          # Calculate ENV variables
+          VERSION=$(cat ./version)
+          IMAGE_ID=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:$VERSION
+          IMAGE_LATEST_ID=ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest
+
+          # Build the image
+          docker build ./src/ --file ./src/Dockerfile --tag $IMAGE_ID --label "runnumber=${GITHUB_RUN_ID}"
+
+          # Tag image as latest
+          docker tag $IMAGE_ID $IMAGE_LATEST_ID
+
+          # Push the image to GitHub Container Registry
+          docker push $IMAGE_ID
+          docker push $IMAGE_LATEST_ID
