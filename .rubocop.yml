@@ -1,0 +1,29 @@
+AllCops:
+  TargetRubyVersion: 2.7
+  NewCops: enable
+Layout/LineLength:
+  Max: 160
+Metrics/PerceivedComplexity:
+  Enabled: false
+Metrics/CyclomaticComplexity:
+  Enabled: false
+Metrics/MethodLength:
+  Max: 160
+Metrics/AbcSize:
+  Enabled: false
+Metrics/ClassLength:
+  Max: 750
+Metrics/ParameterLists:
+  Max: 8
+Metrics/BlockLength:
+  Enabled: false
+Style/ClassAndModuleChildren:
+  Enabled: false
+Naming/VariableNumber:
+  EnforcedStyle: snake_case
+Style/MultilineTernaryOperator:
+  Enabled: false
+Style/NestedTernaryOperator:
+  Enabled: false
+Style/GlobalVars:
+  Enabled: false

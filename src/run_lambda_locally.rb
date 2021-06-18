@@ -27,15 +27,15 @@ require_relative 'lambda_function'
 
 lambda_handler(
   event: {
-    "results_bucket" => "inspec-results-bucket-dev-28wd",
-    "profile" => "https://github.com/mitre/microsoft-windows-server-2019-stig-baseline.git",
-    "profile_common_name" => "microsoft-windows-server-2019-stig-baseline",
-    "config" => {
-      "target" => "winrm://i-0e35ab216355084ee", #ec2-160-1-5-36.us-gov-west-1.compute.amazonaws.com
-      "user" => "Administrator",
-      "password" => {
-        "instance_id" => "i-0e35ab216355084ee",
-        "launch_key" => "/inspec/test-ssh-key"
+    'results_bucket' => 'inspec-results-bucket-dev-28wd',
+    'profile' => 'https://github.com/mitre/microsoft-windows-server-2019-stig-baseline.git',
+    'profile_common_name' => 'microsoft-windows-server-2019-stig-baseline',
+    'config' => {
+      'target' => 'winrm://i-0e35ab216355084ee', # ec2-160-1-5-36.us-gov-west-1.compute.amazonaws.com
+      'user' => 'Administrator',
+      'password' => {
+        'instance_id' => 'i-0e35ab216355084ee',
+        'launch_key' => '/inspec/test-ssh-key'
       }
     }
   },
