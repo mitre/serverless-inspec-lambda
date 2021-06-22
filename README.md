@@ -329,6 +329,6 @@ MITRE hereby grants express written permission to use, reproduce, distribute, mo
 
 ### NOTICE
 
-This software was produced for the U. S. Government under Contract Number HHSM-500-2012-00008I, and is subject to Federal Acquisition Regulation Clause 52.227-14, Rights in Data-General.
+This software was produced for the U. S. Government under Contract Number W56KGU-18-D-0004, and is subject to Federal Acquisition Regulation Clause 52.227-14, Rights in Data-General.
 
 No other use other than that granted to the U. S. Government, or to those acting on behalf of the U. S. Government under that Clause is authorized without the express written permission of The MITRE Corporation.
