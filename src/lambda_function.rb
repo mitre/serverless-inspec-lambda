@@ -29,7 +29,8 @@ end
 #
 # See the README for more information
 #
-def lambda_handler(event:, _context:)
+# rubocop:disable Lint/UnusedMethodArgument
+def lambda_handler(event:, context:)
   # Set export filename
   filename, file_path = generate_json_file(event['profile_common_name'] || 'unnamed_profile')
   $logger.info("Will write JSON at #{file_path}")
@@ -67,6 +68,7 @@ def lambda_handler(event:, _context:)
     }
   )
 end
+# rubocop:enable Lint/UnusedMethodArgument
 
 def get_account_id(context)
   aws_account_id = context.invoked_function_arn.split(':')[4]
