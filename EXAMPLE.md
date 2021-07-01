@@ -13,6 +13,16 @@ docker pull ghcr.io/mitre/serverless-inspec-lambda:<version>
 
 ```hcl
 ##
+# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/region
+#
+data "aws_region" "current" {}
+
+##
+# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity
+#
+data "aws_caller_identity" "current" {}
+
+##
 # InSpec Role to Invoke InSpec Lambda function 
 #
 # https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/iam_role
@@ -75,6 +85,66 @@ resource "aws_iam_role" "InSpecRole" {
           ]
           Effect   = "Allow"
           Resource = "${var.results_bucket_arn}/*"
+        }
+      ]
+    })
+  }
+
+  # Allow SSM DescribeInstanceInformation for awsssm:// transports
+  inline_policy {
+    name = "SsmDescribeInstanceInformationAccess"
+
+    policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+        {
+          Action = [
+            "ssm:DescribeInstanceInformation"
+          ]
+          Effect   = "Allow"
+          Resource = "*"
+        }
+      ]
+    })
+  }
+
+  # Allow SSM SendCommand for awsssm:// transports
+  inline_policy {
+    name = "SsmSendCommandAccess"
+
+    policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+        {
+          Action = [
+            "ssm:SendCommand"
+          ]
+          Effect   = "Allow"
+          # Consider locking this down further to only instances that need to be scanned with awsssm://
+          Resource = [
+              "arn:aws-us-gov:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:managed-instance/*",
+              "arn:aws-us-gov:ec2:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:instance/*",
+              "arn:aws-us-gov:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:document/AWS-RunPowerShellScript",
+              "arn:aws-us-gov:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:document/AWS-RunShellScript"
+          ]
+        }
+      ]
+    })
+  }
+
+  # Allow SSM SendCommand for awsssm:// transports
+  inline_policy {
+    name = "SsmGetCommandInvocationAccess"
+
+    policy = jsonencode({
+      Version = "2012-10-17"
+      Statement = [
+        {
+          Action = [
+            "ssm:GetCommandInvocation"
+          ]
+          Effect   = "Allow"
+          Resource = "*"
         }
       ]
     })
