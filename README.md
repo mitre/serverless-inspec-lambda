@@ -28,13 +28,13 @@ You can find more details on these configurations and additional configuration o
 
 ### What are the requirement differences between SSH, WinRM, SSH via SSM, SSM send command, etc?
 
-|                               | must manage SSH keys | must have network access to target | must have SSM Agent installed on target | both lambda and target must have network access to SSM |
-|-------------------------------|----------------------|------------------------------------|-----------------------------------------|--------------------------------------------------------|
-| SSH                           | ✅                    | ✅                                  | ❌                                       | ❌                                                      |
-| WinRM                         | ✅                    | ✅                                  | ❌                                       | ❌                                                      |
-| SSH via SSM                   | ✅                    | ❌                                  | ✅                                       | ✅                                                      |
-| WinRM via SSM Port Forwarding | ✅                    | ❌                                  | ✅                                       | ✅                                                      |
-| SSM Send Command              | ❌                    | ❌                                  | ✅                                       | ✅                                                      |
+|                               | Must manage SSH keys | Must have network access to target | Must have SSM Agent installed on target | Both lambda and target must have network access to SSM | Example Target                     |
+|:-----------------------------:|:--------------------:|:----------------------------------:|:---------------------------------------:|:------------------------------------------------------:|------------------------------------|
+|              SSH              |           ✅          |                  ✅                 |                    ❌                    |                            ❌                           | ssh://root@domain.com              |
+|             WinRM             |           ✅          |                  ✅                 |                    ❌                    |                            ❌                           | winrm://domain.com                 |
+|          SSH via SSM          |           ✅          |                  ❌                 |                    ✅                    |                            ✅                           | ssh://ec2-user@i-0e35ab216355084ee |
+| WinRM via SSM Port Forwarding |           ✅          |                  ❌                 |                    ✅                    |                            ✅                           | winrm://i-0e35ab216355084ee        |
+|        SSM Send Command       |           ❌          |                  ❌                 |                    ✅                    |                            ✅                           | awsssm://i-0e35ab216355084ee        |
 
 
 ### AWS Resource Scanning
@@ -150,7 +150,7 @@ Note that if you are running InSpec AWS scans, then the lambda's IAM profile mus
   "profile": "https://github.com/mitre/microsoft-windows-server-2019-stig-baseline.git",
   "profile_common_name": "microsoft-windows-server-2019-stig-baseline",
   "config": {
-    "target": "awssm://i-0e35ab216355084ee"
+    "target": "awsssm://i-0e35ab216355084ee"
   }
 }
 ```
