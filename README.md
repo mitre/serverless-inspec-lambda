@@ -26,6 +26,17 @@ These are examples of the JSON that can be passed into the lambda event to obtai
 
 You can find more details on these configurations and additional configuration options in this README.
 
+### What are the requirement differences between SSH, WinRM, SSH via SSM, SSM send command, etc?
+
+|                               | must manage SSH keys | must have network access to target | must have SSM Agent installed on target | both lambda and target must have network access to SSM |
+|-------------------------------|----------------------|------------------------------------|-----------------------------------------|--------------------------------------------------------|
+| SSH                           | ✅                    | ✅                                  | ❌                                       | ❌                                                      |
+| WinRM                         | ✅                    | ✅                                  | ❌                                       | ❌                                                      |
+| SSH via SSM                   | ✅                    | ❌                                  | ✅                                       | ✅                                                      |
+| WinRM via SSM Port Forwarding | ✅                    | ❌                                  | ✅                                       | ✅                                                      |
+| SSM Send Command              | ❌                    | ❌                                  | ✅                                       | ✅                                                      |
+
+
 ### AWS Resource Scanning
 Note that if you are running InSpec AWS scans, then the lambda's IAM profile must have suffient permissions to analyze your environment.
 ```json
@@ -77,6 +88,22 @@ Note that if you are running InSpec AWS scans, then the lambda's IAM profile mus
 }
 ```
 
+### RedHat 7 STIG Baseline (SSM Send Command)
+```json
+{
+  "results_bucket": "inspec-results-bucket",
+  "profile": "https://github.com/mitre/redhat-enterprise-linux-7-stig-baseline.git",
+  "profile_common_name": "redhat-enterprise-linux-7-stig-baseline-master",
+  "config": {
+    "target": "awsssm://i-00f1868f8f3b4cc03",
+    "input": [
+      "disable_slow_controls=true"
+    ],
+    "sudo": true
+  }
+}
+```
+
 ### PostgreSQL 12 STIG Baseline (TODO)
 ```json
 "https://github.com/mitre/aws-rds-crunchy-data-postgresql-9-stig-baseline"
@@ -116,6 +143,18 @@ Note that if you are running InSpec AWS scans, then the lambda's IAM profile mus
 }
 ```
 
+### Windows Server 2019 STIG Baseline (SSM Send Command)
+```json
+{
+  "results_bucket": "inspec-results-bucket-dev-28wd",
+  "profile": "https://github.com/mitre/microsoft-windows-server-2019-stig-baseline.git",
+  "profile_common_name": "microsoft-windows-server-2019-stig-baseline",
+  "config": {
+    "target": "awssm://i-0e35ab216355084ee"
+  }
+}
+```
+
 ## Where Do The Results Go?
 If you DO NOT specify the `results_bucket` parameter in the lambda event, then the results will just be logged to CloudWatch. If you DO specify the `results_bucket` parameter in the lambda event, then the lambda will attempt to save the results JSON to the S3 bucket under `unprocessed/*`. The format of the JSON is meant to be a incomplete API call to push results to a Heimdall Server and looks like this:
 ```javascript
@@ -146,6 +185,17 @@ Note that you aren't limited to just scanning AWS resources, as long as the lamb
   "...": "...",
   "config": {
     "target": "ssh://ec2-user@somednsname.aws.com"
+  }
+}
+```
+
+### SSM Send Command
+SSM Send Command is enabled with the [train-awsssm](https://github.com/tecracer-chef/train-awsssm) gem. Use of this target method allows you to use the SSM provided SendCommand functionality to interact with the target. This requires that SSM agent be installed on the target, as well as both the lamdba and the target having network access to an AWS SSM Endpoint. The key benefit to this method is that it does not require you to manage SSH keys because AWS SSM will handle that work for you. You are technically allowed to specify the domain name or the instance ID after `awsssm://*`, however, it will likely be more convenient to use the instance ID in most cases.
+```json
+{
+  "...": "...",
+  "config": {
+    "target": "awsssm://i-00f1868f8f3b4cc03"
   }
 }
 ```

@@ -25,6 +25,20 @@ class Hash
 end
 
 ##
+# The current train-awsssm gem does not implement file_via_connection.
+# This patch is meant to implement it in a minimal manner.
+#
+module TrainPlugins
+  module AWSSSM
+    class Connection < Train::Plugins::Transport::BaseConnection
+      def file_via_connection(path)
+        windows_instance? ? Train::File::Remote::Windows.new(self, path) : Train::File::Remote::Unix.new(self, path)
+      end
+    end
+  end
+end
+
+##
 # Entrypoint for the Serverless InSpec lambda functoin
 #
 # See the README for more information

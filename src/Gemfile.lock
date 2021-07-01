@@ -477,6 +477,7 @@ GEM
       aws-sdk-ssm (~> 1.0)
       aws-sdk-states (>= 1.35, < 1.40)
       aws-sdk-transfer (>= 1.26, < 1.33)
+    train-awsssm (0.2.1)
     train-core (3.7.0)
       addressable (~> 2.5)
       ffi (!= 1.13.0)
@@ -544,6 +545,7 @@ DEPENDENCIES
   aws-sdk-ssm (~> 1)
   inspec
   inspec-bin
+  train-awsssm
 
 BUNDLED WITH
    2.2.11
