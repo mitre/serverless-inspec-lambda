@@ -30,6 +30,7 @@ end
 #
 module TrainPlugins
   module AWSSSM
+    # Patch existing class in https://github.com/tecracer-chef/train-awsssm
     class Connection < Train::Plugins::Transport::BaseConnection
       def file_via_connection(path)
         windows_instance? ? Train::File::Remote::Windows.new(self, path) : Train::File::Remote::Unix.new(self, path)
