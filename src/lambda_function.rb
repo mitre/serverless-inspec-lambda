@@ -175,7 +175,7 @@ def handle_s3_profile(event)
     exit 1
   end
 
-  profile_download_path = '/tmp/inspec-profile.zip'
+  profile_download_path = "/tmp/inspec-profile#{key.end_with?('.zip') ? '.zip' : '.tar.gz'}"
   $logger.info("Downloading InSpec profile to #{profile_download_path}")
   s3_client = Aws::S3::Client.new
   s3_client.get_object({ bucket: bucket, key: key }, target: profile_download_path)
