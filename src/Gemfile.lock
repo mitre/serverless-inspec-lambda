@@ -214,6 +214,7 @@ GEM
       ms_rest_azure (~> 0.12.0)
     azure_mgmt_storage (0.23.0)
       ms_rest_azure (~> 0.12.0)
+    bcrypt_pbkdf (1.1.0)
     builder (3.2.4)
     chef-config (17.1.35)
       addressable
@@ -236,6 +237,7 @@ GEM
       multi_json
     domain_name (0.5.20190701)
       unf (>= 0.0.5, < 1.0.0)
+    ed25519 (1.2.4)
     erubi (1.10.0)
     excon (0.81.0)
     faraday (1.4.1)
@@ -543,6 +545,8 @@ DEPENDENCIES
   aws-sdk-lambda (~> 1)
   aws-sdk-s3 (~> 1)
   aws-sdk-ssm (~> 1)
+  bcrypt_pbkdf (>= 1.0, < 2.0)
+  ed25519 (>= 1.2, < 2.0)
   inspec
   inspec-bin
   train-awsssm
