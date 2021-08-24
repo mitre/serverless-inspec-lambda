@@ -11,11 +11,12 @@ require_relative 'lambda_function'
 
 lambda_handler(
   event: {
-    'results_bucket' => 'inspec-results-bucket-dev-28wd',
+    'results_bucket' => 'inspec-results-bucket-dev-f9wg',
     'profile' => 'https://github.com/mitre/redhat-enterprise-linux-7-stig-baseline/archive/master.tar.gz',
     'profile_common_name' => 'rhel7-stig-testing',
+    'ssm_temp_ssh_key' => true,
     'config' => {
-      'target' => 'awsssm://i-00f1868f8f3b4eb03',
+      'target' => 'ssh://ssm-user@i-00f1868f8f3b4eb03',
       'input' => [
         'disable_slow_controls=true'
       ],

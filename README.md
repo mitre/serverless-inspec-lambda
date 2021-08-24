@@ -32,7 +32,7 @@ You can find more details on these configurations and additional configuration o
 |:-----------------------------:|:--------------------:|:----------------------------------:|:---------------------------------------:|:------------------------------------------------------:|------------------------------------|
 |              SSH              |           ✅          |                  ✅                 |                    ❌                    |                            ❌                           | ssh://root@domain.com              |
 |             WinRM             |           ✅          |                  ✅                 |                    ❌                    |                            ❌                           | winrm://domain.com                 |
-|          SSH via SSM          |           ✅          |                  ❌                 |                    ✅                    |                            ✅                           | ssh://ec2-user@i-0e35ab216355084ee |
+|          SSH via SSM          |   ✅ /❌ (optional)   |                  ❌                 |                    ✅                    |                            ✅                           | ssh://ec2-user@i-0e35ab216355084ee |
 | WinRM via SSM Port Forwarding |           ✅          |                  ❌                 |                    ✅                    |                            ✅                           | winrm://i-0e35ab216355084ee        |
 |        SSM Send Command       |           ❌          |                  ❌                 |                    ✅                    |                            ✅                           | awsssm://i-0e35ab216355084ee        |
 
@@ -71,7 +71,7 @@ Note that if you are running InSpec AWS scans, then the lambda's IAM profile mus
 }
 ```
 
-### RedHat 7 STIG Baseline (SSH via SSM)
+### RedHat 7 STIG Baseline (SSH via SSM with managed SSH key)
 ```json
 {
   "results_bucket": "inspec-results-bucket",
@@ -84,6 +84,22 @@ Note that if you are running InSpec AWS scans, then the lambda's IAM profile mus
       "disable_slow_controls=true"
     ],
     "sudo": true
+  }
+}
+```
+
+### RedHat 7 STIG Baseline (SSH via SSM without managed SSH key)
+```json
+{
+  "results_bucket": "inspec-results-bucket",
+  "ssm_temp_ssh_key": true,
+  "profile": "https://github.com/mitre/redhat-enterprise-linux-7-stig-baseline.git",
+  "profile_common_name": "redhat-enterprise-linux-7-stig-baseline-master",
+  "config": {
+    "target": "ssh://root@i-00f1868f8f3b4cc03",
+    "input": [
+      "disable_slow_controls=true"
+    ],
   }
 }
 ```
@@ -202,11 +218,35 @@ SSM Send Command is enabled with the [train-awsssm](https://github.com/tecracer-
 
 ### SSH (Tunneled Through SSM)
 The difference with this example and the one above is that the `target` is the instance ID of the EC2 instance. This tells the lambda to use a [SSM SSH connection](https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-getting-started-enable-ssh-connections.html) to tunnel the SSH connection. This is particularly useful if there is not direct network access to the EC2 isntance, but both the lambda and EC2 instance have access to SSM. Note that this also requires that your EC2 instance be a SSM managed instance.
+#### With Your Own Managed Keys
 ```json
 {
   "...": "...",
   "config": {
     "target": "ssh://ec2-user@i-00f1868f8f3b4cc03"
+  }
+}
+```
+
+#### Without Your Own Managed Keys
+This method of InSpec scanning works with the following sequence of events:
+1. Generate a SSH key pair within the lambda function
+2. Use the [train-awsssm](https://github.com/tecracer-chef/train-awsssm) plugin to send the public key material to `~/.ssh/authorized_keys` using [SSM Send Command](https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/SSM/Client.html#send_command-instance_method)
+3. Immedately queue another SSM Send Command to remove the key from `~/.ssh/authorized_keys` after 60 seconds
+4. Start an SSH session using the generated key pair and execute the InSpec scan over SSH
+
+Assumptions with this method:
+- Scanning linux-based instances (i.e. not Windows)
+- The instance has the following commands installed: `su`, `mkdir`, `touch`, `echo`, `sleep`, `grep`, `mv`
+- The user that runs "SSM Send Command" commands is priviledged to write to any user's `~/.ssh` directory (this should default to root unless explicitly changed)
+
+This method is advantageous over the "SSM Send Command" method mentioned above because invoking all InSpec commands over SSM Send Command is significantly slower than over SSH, and it shares advantage of relieving the need to manually manage SSH keys.
+```json
+{
+  "...": "...",
+  "ssm_temp_ssh_key": true,
+  "config": {
+    "target": "ssh://ec2-use@i-00f1868f8f3b4cc03"
   }
 }
 ```

@@ -6,6 +6,7 @@ require 'aws-sdk-s3'
 require 'json'
 require 'inspec'
 require 'logger'
+require 'train-awsssm'
 
 puts "RUBY_VERSION: #{RUBY_VERSION}"
 $logger = Logger.new($stdout)
@@ -91,6 +92,55 @@ def get_account_id(context)
 end
 
 ##
+# Temporarily add a pubic key to a target managed instance for use over SSH.
+#
+# params:
+# - host (string) The host ip or ID such as 'i-0e35ab216355084ee'
+# - pub_key (string) The public key material
+# - rm_wait (int) How long to keep the key active on the target system
+#
+def add_tmp_ssh_key(host, user, pub_key, rm_wait = 60)
+  $logger.info('Adding temporary SSH key pair to instance')
+  pub_key = pub_key.strip
+  train = Train.create(
+    'awsssm',
+    { host: host, logger: Logger.new($stdout, level: :info), execution_timeout: rm_wait + 30 }
+  )
+  conn = train.connection
+
+  home_dir = conn.run_command("sudo -u #{user} sh -c 'echo $HOME'").stdout.strip
+
+  put_cmd = "mkdir -p #{home_dir}/.ssh;"\
+            " touch #{home_dir}/.ssh/authorized_keys;"\
+            " echo '#{pub_key}' >> #{home_dir}/.ssh/authorized_keys;"
+
+  rm_cmd = "sleep #{rm_wait};"\
+           " grep -vF \"#{pub_key}\" #{home_dir}/.ssh/authorized_keys > #{home_dir}/.ssh/authorized_keys.tmp;"\
+           " mv #{home_dir}/.ssh/authorized_keys.tmp #{home_dir}/.ssh/authorized_keys"
+
+  put_result = conn.run_command(put_cmd)
+  puts "cmd result: #{put_result}"
+  Thread.new do
+    _ = conn.run_command(rm_cmd)
+    conn.close
+  end
+end
+
+##
+# Generate an SSH key pair and return the path to the public and private key files
+#
+def generate_key_pair
+  $logger.info('Generating SSH key pair')
+  `rm -f /tmp/id_rsa*`
+  priv_key_path = '/tmp/id_rsa'
+  pub_key_path = '/tmp/id_rsa.pub'
+  # shell out to ssh-keygen
+  `ssh-keygen -f #{priv_key_path} -N ''`
+
+  [priv_key_path, pub_key_path]
+end
+
+##
 # Generates the configuration that will be used for the InSpec execution
 #
 def build_config(event, file_path)
@@ -107,10 +157,24 @@ def build_config(event, file_path)
   ssh_key = fetch_ssh_key(event['ssh_key_ssm_param'])
   config['key_files'] = [ssh_key] unless ssh_key.nil?
 
+  # SSH via SSM
   if %r{ssh://.+@m?i-[a-z0-9]{17}}.match? config['target']
     $logger.info('Using proxy SSM session to SSH to managed EC2 instance.')
     config['proxy_command'] =
       'sh -c "aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters portNumber=%p"'
+
+    # SSH via SSM without managed keys
+    if event['ssm_temp_ssh_key']
+      $logger.info('SSH via SSM will use a temporary key pair.')
+      priv_key_path, pub_key_path = generate_key_pair
+      # Parse the instance Id and pass to add_tmp_ssh_key
+      instance_id = config['target'][/m?i-[a-z0-9]{17}/]
+      user = config['target'][%r{ssh://.+@}][6..-2]
+      add_tmp_ssh_key(instance_id, user, File.read(pub_key_path))
+      # If the config does not have keys yet, then initialize it before adding the key path to it
+      config['key_files'] ||= []
+      config['key_files'] << priv_key_path
+    end
   end
 
   if %r{winrm://m?i-[a-z0-9]{17}}.match? config['target']
