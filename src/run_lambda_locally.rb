@@ -11,34 +11,21 @@ require_relative 'lambda_function'
 
 lambda_handler(
   event: {
-    'command' => 'inspec exec https://gitlab.dsolab.io/scv-content/inspec/kubernetes/baselines/k8s-cluster-stig-baseline/-/archive/master/k8s-cluster-stig-baseline-master.tar.gz'\
-                 ' -t k8s://',
-    'results_name' => 'k8s-cluster-stig-baseline-dev-cluster',
+    'command' => 'inspec exec https://github.com/mitre/redhat-enterprise-linux-7-stig-baseline/archive/master.tar.gz'\
+                 ' -t ssh://ssm-user@i-00f1868f8f3b4eb03'\
+                 ' --sudo'\
+                 ' -i /tmp/tmp_ssh_key'\
+                 ' --input=\'disable_slow_controls=true\''\
+                 ' --proxy-command=\'sh -c "aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters portNumber=%p"\'',
+    'results_name' => 'redhat-enterprise-linux-7-stig-baseline-inspec-rhel7-test',
     'results_buckets' => [
       'inspec-results-bucket-dev'
     ],
-    'eval_tags' => 'ServerlessInspec,k8s',
-    'resources' => [
-      {
-        'local_file_path' => '/tmp/kube/config',
-        'source_aws_s3_bucket' => 'inspec-profiles-bucket-dev',
-        'source_aws_s3_key' => 'kube-dev/config'
-      },
-      {
-        'local_file_path' => '/tmp/kube/client.crt',
-        'source_aws_ssm_parameter_key' => '/inspec/kube-dev/client_crt'
-      },
-      {
-        'local_file_path' => '/tmp/kube/client.key',
-        'source_aws_ssm_parameter_key' => '/inspec/kube-dev/client_key'
-      },
-      {
-        'local_file_path' => '/tmp/kube/ca.crt',
-        'source_aws_ssm_parameter_key' => '/inspec/kube-dev/ca_crt'
-      }
-    ],
-    'env' => {
-      'KUBECONFIG' => '/tmp/kube/config'
+    'eval_tags' => 'ServerlessInspec,RHEL7,inspec-rhel7-test,SSH-SSM',
+    'tmp_ssm_ssh_key' => {
+      'host' => 'i-00f1868f8f3b4eb03',
+      'user' => 'ssm-user',
+      'key_name' => 'tmp_ssh_key'
     }
   },
   context: nil
@@ -68,6 +55,7 @@ _ = {
 _ = {
   'command' => 'inspec exec https://github.com/mitre/redhat-enterprise-linux-7-stig-baseline/archive/master.tar.gz'\
                ' -t ssh://ssm-user@i-00f1868f8f3b4eb03'\
+               ' --sudo'\
                ' -i /tmp/tmp_ssh_key'\
                ' --input=\'disable_slow_controls=true\''\
                ' --proxy-command=\'sh -c "aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters portNumber=%p"\'',
