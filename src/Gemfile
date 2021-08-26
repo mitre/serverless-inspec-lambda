@@ -4,6 +4,7 @@ source 'https://rubygems.org'
 
 gem 'aws-sdk-lambda', '~> 1'
 gem 'aws-sdk-s3', '~> 1'
+gem 'aws-sdk-secretsmanager', '~> 1'
 gem 'aws-sdk-ssm', '~> 1'
 
 # net-ssh requires the following gems for ed25519 support:
@@ -13,3 +14,4 @@ gem 'ed25519', '>= 1.2', '< 2.0'
 gem 'inspec'
 gem 'inspec-bin'
 gem 'train-awsssm'
+gem 'train-kubernetes', '>=0.1.6'

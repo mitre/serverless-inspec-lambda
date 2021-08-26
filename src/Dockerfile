@@ -39,6 +39,8 @@ RUN yum install -y gcc make gcc-c++ git unzip &&\
  git init &&\
  # Install gem dependencies with bundler
  bundle install --path vendor/bundle/ &&\
+ # Install k8s train plugin
+ inspec plugin install train-kubernetes &&\
  # Install the AWS CLI 
  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" &&\
  unzip awscliv2.zip &&\
