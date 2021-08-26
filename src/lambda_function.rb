@@ -62,9 +62,10 @@ def lambda_handler(event:, context:)
 
   # Execute InSpec
   # https://ruby-doc.org/core-2.3.0/Kernel.html#method-i-system
-  $logger.info("Executing InSpec command: #{inspec_cmd}")
-  system('inspec', *Shellwords.split(env_inspec_cmd))
-  $logger.info('InSpec exec completed!')
+  $logger.info("Executing InSpec command: inspec #{inspec_cmd}")
+  puts system('inspec help')
+  success = system('bundle', *(%w[exec inspec] + Shellwords.split(env_inspec_cmd)))
+  $logger.info("InSpec exec completed! Success: #{success.nil? ? 'nil (command might not be found)' : success}")
 
   return if event['results_buckets'].nil? || event['results_buckets'].empty?
 
@@ -278,19 +279,20 @@ def add_tmp_ssh_key(tmp_ssm_ssh_key, pub_key)
   conn = train.connection
 
   home_dir = conn.run_command("sudo -u #{user} sh -c 'echo $HOME'").stdout.strip
+  sleep 1
 
   put_cmd = "mkdir -p #{home_dir}/.ssh;"\
             " touch #{home_dir}/.ssh/authorized_keys;"\
             " echo '#{pub_key}' >> #{home_dir}/.ssh/authorized_keys;"
 
   rm_cmd = "sleep #{rm_wait};"\
-           " grep -vF \"#{pub_key}\" #{home_dir}/.ssh/authorized_keys > #{home_dir}/.ssh/authorized_keys.tmp;"\
+           " grep -vF '#{pub_key}' #{home_dir}/.ssh/authorized_keys > #{home_dir}/.ssh/authorized_keys.tmp;"\
            " mv #{home_dir}/.ssh/authorized_keys.tmp #{home_dir}/.ssh/authorized_keys"
 
-  put_result = conn.run_command(put_cmd)
-  puts "cmd result: #{put_result}"
+  puts "cmd result: #{conn.run_command(put_cmd)}"
+  sleep 1
   Thread.new do
-    _ = conn.run_command(rm_cmd)
+    puts "remove result: #{conn.run_command(rm_cmd)}"
     conn.close
     $logger.info('Removed temporary SSH key pair from instance.')
   end
