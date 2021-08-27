@@ -42,13 +42,9 @@ def lambda_handler(event:, context:)
   filename, file_path = generate_json_file(event['results_name'] || 'unnamed_profile')
   $logger.info("Will write JSON at #{file_path}")
 
-  # Make modifcations to the InSpec command
-  inspec_cmd = event['command']
-  inspec_cmd = inspec_cmd.strip
-  inspec_cmd = inspec_cmd.sub('inspec ', '') if inspec_cmd.start_with?('inspec ')
-  inspec_cmd = inspec_cmd.strip
-  inspec_cmd = "exec #{inspec_cmd}" unless inspec_cmd.start_with?('exec ')
-  inspec_cmd += " --show-progress --reporter cli json:#{file_path}"
+  # Validate and make modifcations to the InSpec command
+  inspec_cmd = event['command'] + " --show-progress --reporter cli json:#{file_path}"
+  raise(StandardError, "Expected command to start with 'inspec exec ' but got: #{inspec_cmd}") if inspec_cmd[/^\s*inspec\s+exec\s+/].nil?
 
   # Resources and ENV setup
   configure_event_env(event['env']) unless event['env'].nil?
@@ -62,9 +58,8 @@ def lambda_handler(event:, context:)
 
   # Execute InSpec
   # https://ruby-doc.org/core-2.3.0/Kernel.html#method-i-system
-  $logger.info("Executing InSpec command: inspec #{inspec_cmd}")
-  puts system('inspec help')
-  success = system('bundle', *(%w[exec inspec] + Shellwords.split(env_inspec_cmd)))
+  $logger.info("Executing InSpec command: #{inspec_cmd}")
+  success = system('bundle', *(['exec'] + Shellwords.split(env_inspec_cmd)))
   $logger.info("InSpec exec completed! Success: #{success.nil? ? 'nil (command might not be found)' : success}")
 
   return if event['results_buckets'].nil? || event['results_buckets'].empty?
@@ -279,7 +274,6 @@ def add_tmp_ssh_key(tmp_ssm_ssh_key, pub_key)
   conn = train.connection
 
   home_dir = conn.run_command("sudo -u #{user} sh -c 'echo $HOME'").stdout.strip
-  sleep 1
 
   put_cmd = "mkdir -p #{home_dir}/.ssh;"\
             " touch #{home_dir}/.ssh/authorized_keys;"\
@@ -290,7 +284,7 @@ def add_tmp_ssh_key(tmp_ssm_ssh_key, pub_key)
            " mv #{home_dir}/.ssh/authorized_keys.tmp #{home_dir}/.ssh/authorized_keys"
 
   puts "cmd result: #{conn.run_command(put_cmd)}"
-  sleep 1
+
   Thread.new do
     puts "remove result: #{conn.run_command(rm_cmd)}"
     conn.close
