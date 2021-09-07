@@ -82,22 +82,30 @@ def lambda_handler(event:, context:)
       }
     )
   end
+ensure
+  # Remove configured ENV variables
+  tear_down_event_env(event)
+
+  # Clear out /tmp/
+  `rm -rf /tmp/*`
 end
 # rubocop:enable Lint/UnusedMethodArgument
 
 def configure_event_env(env)
   $logger.info('Configuring ENV defined in event..')
-  env.each { |k, v| set_env(k, v) }
+  env.each { |name, value| ENV[name] = value }
 end
 
-##
-# Simple helper to re-use logic that we should not overwrite ENV variables that already exist
-#
-def set_env(name, value)
-  is_env_already_set = !ENV[name].nil?
-  raise(StandardError, "Could overwrite existing ENV variable: #{name}") if is_env_already_set
+def tear_down_event_env(event)
+  $logger.info('Configuring ENV defined in event..')
 
-  ENV[name] = value
+  # Remove static ENV definitions
+  (event['env'] || []).each { |name, _| ENV[name] = nil }
+
+  # Remove resource ENV definitions
+  (event['resources'] || []).each do |resource|
+    ENV[resource['env_variable']] = nil if resource['env_variable']
+  end
 end
 
 def fetch_resources(resources)
@@ -153,7 +161,7 @@ def fetch_ssm_parameter_resource(resource, local_file_path, is_file_download_des
   if is_file_download_dest
     File.write(local_file_path, resp.parameter.value)
   elsif is_env_variable_dest
-    set_env(resource['env_variable'], resp.parameter.value)
+    ENV[resource['env_variable']] = resp.parameter.value
   else
     raise(StandardError, "Could not determine local destination for resource definition: #{resource}")
   end
@@ -176,7 +184,7 @@ def fetch_secrets_manager_resource(resource, local_file_path, is_file_download_d
   if is_file_download_dest
     File.write(local_file_path, resp.secret_string)
   elsif is_env_variable_dest
-    set_env(resource['env_variable'], resp.secret_string)
+    ENV[resource['env_variable']] = resp.secret_string.value
   else
     raise(StandardError, "Could not determine local destination for resource definition: #{resource}")
   end
@@ -190,7 +198,7 @@ def fetch_s3_bucket_resource(resource, local_file_path, is_file_download_dest, i
                          target: local_file_path)
   elsif is_env_variable_dest
     resp = s3.get_object(bucket: resource['source_aws_s3_bucket'], key: resource['source_aws_s3_key'])
-    set_env(resource['env_variable'], resp.body.read)
+    ENV[resource['env_variable']] = resp.body.read
   else
     raise(StandardError, "Could not determine local destination for resource definition: #{resource}")
   end
