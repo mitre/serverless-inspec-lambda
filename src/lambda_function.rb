@@ -68,15 +68,26 @@ def lambda_handler(event:, context:)
   # https://docs.aws.amazon.com/sdk-for-ruby/v3/api/Aws/S3/Client.html
   # Consider allowing passing additional eval_tags through the event
   # Consider tagging with the account ID
+  payload = {
+    'data' => JSON.parse(File.read(file_path)),
+    'eval_tags' => event['eval_tags'] || 'ServerlessInspec'
+  }
+  # Groups is expected to be a string array
+  if event['groups']
+    # Ensure string array
+    unless event['groups'].is_a?(Array) && (event['groups'].all? { |element| element.is_a?(String) })
+      $logger.error("Groups argument must be an Array of Strings: #{event['groups']}")
+      exit 1
+    end
+    payload['groups'] = event['groups']
+  end
+
   event['results_buckets'].each do |bucket|
     $logger.info("Pushing results to S3 bucket: #{bucket}")
     s3_client = Aws::S3::Client.new
     s3_client.put_object(
       {
-        body: StringIO.new({
-          'data' => JSON.parse(File.read(file_path)),
-          'eval_tags' => event['eval_tags'] || 'ServerlessInspec'
-        }.to_json),
+        body: StringIO.new(payload.to_json),
         bucket: bucket,
         key: "unprocessed/#{filename}"
       }
