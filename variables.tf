@@ -23,6 +23,12 @@ variable "lambda_role_arn" {
   default = ""
 }
 
+variable "cloudwatch_logs_kms_key_id" {
+  description = "The ARN of the KMS key to use for lambda log encryption."
+  type        = string
+  default     = null
+}
+
 variable "lambda_name" {
   description = "The name of the lambda function"
   type = string

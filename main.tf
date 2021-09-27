@@ -55,21 +55,6 @@ resource "null_resource" "push_image" {
 }
 
 ##
-# KMS key for encrypting lambda log data
-#
-# https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/kms_key
-#
-resource "aws_kms_key" "ServerlessInSpecLogsKmsKey" {
-  description             = "The KMS key used to encrypt ConfigToHdf's logs"
-  deletion_window_in_days = 10
-  enable_key_rotation     = true
-
-  tags = {
-    Name = "ServerlessInSpecLogsKmsKey"
-  }
-}
-
-##
 # InSpec Lambda function
 #
 # https://registry.terraform.io/modules/terraform-aws-modules/lambda/aws/latest
@@ -92,7 +77,7 @@ module "serverless-inspec-lambda" {
   vpc_subnet_ids         = var.subnet_ids
   vpc_security_group_ids = var.security_groups
 
-  cloudwatch_logs_kms_key_id        = aws_kms_key.ServerlessInSpecLogsKmsKey.key_id
+  cloudwatch_logs_kms_key_id        = var.cloudwatch_logs_kms_key_id
   cloudwatch_logs_retention_in_days = 30
 
   create_package = false
